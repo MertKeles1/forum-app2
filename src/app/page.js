@@ -1,103 +1,108 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import Header from '@/components/Header'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+export default function HomePage() {
+  const [topics, setTopics] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchTopics()
+  }, [])
+
+  const fetchTopics = async () => {
+    try {
+      const response = await fetch('/api/topics')
+      if (response.ok) {
+        const data = await response.json()
+        setTopics(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch topics')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffHours < 1) return 'Az önce'
+    if (diffHours < 24) return `${diffHours} saat önce`
+    if (diffDays === 1) return '1 gün önce'
+    return `${diffDays} gün önce`
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="container">
+      <Header />
+      
+      <main className="main-content">
+        <div className="content-header">
+          <h1 className="page-title">Son Konular</h1>
+          <Link href="/topics/new" className="btn-new-topic">
+            + Yeni Konu Aç
+          </Link>
         </div>
+
+        {loading ? (
+          <div className="text-white text-center py-8">Yükleniyor...</div>
+        ) : (
+          <div className="space-y-1">
+            {topics.length === 0 ? (
+              <div className="text-gray-400 text-center py-8">
+                Henüz konu oluşturulmamış. İlk konuyu sen oluştur!
+              </div>
+            ) : (
+              topics.map((topic) => (
+                <div key={topic.id} className="topic-item">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <Link href={`/topics/${topic.id}`} className="block">
+                        <div className="topic-title hover:text-gray-300 transition-colors">
+                          {topic.title}
+                        </div>
+                      </Link>
+                      <div className="topic-meta">
+                        <span>👤 {topic.author.username}</span>
+                        <span>📅 {formatDate(topic.createdAt)}</span>
+                      </div>
+                    </div>
+                    <div className="category-tag">
+                      {topic.category.name}
+                    </div>
+                  </div>
+                  
+                  <div className="topic-preview">
+                    {topic.content.length > 150 
+                      ? topic.content.substring(0, 150) + '...'
+                      : topic.content
+                    }
+                  </div>
+                  
+                  <div className="topic-stats">
+                    <div className="flex items-center gap-1">
+                      💬 {topic.replies.length} yanıt
+                    </div>
+                    <div className="flex items-center gap-1">
+                      👁️ {topic.views} görüntüleme
+                    </div>
+                    <div className="flex items-center gap-1">
+                      ❤️ {topic.likes} beğeni
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
