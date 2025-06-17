@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
 
-export default function LoginForm() {
+export default function LoginComponent() {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
